@@ -1,11 +1,17 @@
 const fs = require('fs');
 const http = require('http');
 const scrapeIt = require('scrape-it');
+const json2csv = require('json2csv');
+let fields = ['title', 'price', 'image', 'url', 'time'];
+let fieldNames = ['Title', 'Price', 'ImageURL', 'URL', 'Time'];
+let date = new Date();
+let today = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+let timestamp = `${today} ${date.getHours()}:${date.getMinutes()}`;
+let result = [];
 
 if (!fs.existsSync('./data')) {
   fs.mkdirSync('./data');
 }
-
 
 scrapeIt('http://shirts4mike.com/shirts.php', {
   shirts: {
@@ -19,11 +25,9 @@ scrapeIt('http://shirts4mike.com/shirts.php', {
   }
 }).then(shirts => {
   shirts = shirts.shirts;
-  console.log(shirts);
   shirts = shirts.map(shirt => { return {url:`http://shirts4mike.com/${shirt.url}`}});
-  console.log(shirts);
   shirts.forEach(shirt => {
-    let data = scrapeIt(shirt.url, {
+    scrapeIt(shirt.url, {
       title: {
         selector: 'title'
       },
@@ -38,7 +42,22 @@ scrapeIt('http://shirts4mike.com/shirts.php', {
       shirt.title = data.title;
       shirt.price = data.price;
       shirt.image = data.image;
-      console.log(shirt);
+      shirt.time = timestamp;
+      result.push(shirt);
+    }).then(() => {
+      let csv = json2csv({data: result, fields: fields, fieldNames: fieldNames});
+      let fileName = `./data/${today}.csv`;
+      fs.writeFile(fileName, csv, (err) => {
+        if (err) throw err;
+        console.log('CSV saved!');
+      });
     });
+  });
+}).catch(error => {
+  let errorMessage = `[${timestamp}] Cannot connect to http://shirts4mike.com.\n`;
+  let fileName = `./data/scraper-error.log`;
+  fs.appendFile(fileName, errorMessage, (err) => {
+    if (err) throw err;
+    console.error(errorMessage);
   });
 });
