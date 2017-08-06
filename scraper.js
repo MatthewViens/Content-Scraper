@@ -1,6 +1,5 @@
 // Include npm packages and node modules.
 const fs = require('fs'),
-      http = require('http'),
       scrapeIt = require('scrape-it'),
       json2csv = require('json2csv');
 
@@ -8,14 +7,24 @@ const fs = require('fs'),
 let fields = ['title', 'price', 'image', 'url', 'time'],
     fieldNames = ['Title', 'Price', 'ImageURL', 'URL', 'Time'],
     date = new Date(),
-    today = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`,
+    year = date.getFullYear().toString(),
+    month = editTime(date.getMonth() + 1),
+    day = editTime(date.getDate()),
+    today = `${year}-${month}-${day}`,
     timestamp = `${today} ${date.getHours()}:${date.getMinutes()}`,
     result = [];
 
-// If data directory doesn't exist, create it.
-if (!fs.existsSync('./data')) {
-  fs.mkdirSync('./data');
+// Helper function to format time to two digits.
+function editTime(time){
+  if((time.toString()).length === 1){
+    return '0' + time;
+  } else{
+    return time.toString();
+  }
 }
+
+// If data directory doesn't exist, create it.
+if (!fs.existsSync('./data')) {fs.mkdirSync('./data')}
 
 // Pass in url to scrapeIt and get the href attribute values from the products div.
 scrapeIt('http://shirts4mike.com/shirts.php', {
